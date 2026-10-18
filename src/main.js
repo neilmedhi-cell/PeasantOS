@@ -11,9 +11,28 @@ const applications=[
   { id: 'settings' ,name:'Settings',icon :'⚙',description:'system preferences'},
   {id:'about', name :'About PeasantOS' ,icon:'◈', description:'Learn about this Project'},
 ];
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[c]));
+}
 function getTime(){
   return new Intl.DateTimeFormat(undefined,{weekday:'short',
     month:'short',day:'numeric',}).format(new Date());
+}
+function renderTaskbar() {
+  const taskbar = document.querySelector('#taskbar-apps');
+  if (!taskbar) return;
+  taskbar.innerHTML = state.windows.map((w) => `
+    <button class="taskbar-app ${w.id === state.activeId && !w.minimized ? 'taskbar-app-active' : ''}"
+            data-action="restore" data-id="${w.id}">
+      <span>${applications.find((a) => a.id === w.appId)?.icon ?? '•'}</span>
+      <span class="taskbar-app-label">${escapeHTML(w.title)}</span>
+    </button>`).join('');
 }
 function renderDesktop(){
   app.innerHTML= `
@@ -24,13 +43,13 @@ function renderDesktop(){
   <button class ="brand" data-action="launcher" aria-label="Open app launcher">
     <span class = "brand-mark">P</span>
   </button>
-  <div class= "topbar-centre"> A little Desktop</div>
+  <div class= "topbar-center"> A little Desktop</div>
   <div class = "system-status">
       <span class ="status-dot"></span>
       <span>System ready</span>
    </div>
   </header>
-  <section class ="desktop-icon" aria-label= "Desktop applications">
+  <section class ="desktop-icons" aria-label= "Desktop applications">
    ${applications.map((item)=>`
       <button class= "desktop-icon" data-app ="${item.id}">
         <span class ="app-icon icon-${item.id}">${item.icon}</span>
@@ -39,7 +58,7 @@ function renderDesktop(){
         `).join(``)}
   </section>
   <section id ="window-layer" class= "window-layer" aria-label ="Application windows"></section>
-   <div id="launcher" calss="launcher hidden">
+   <div id="launcher" class="launcher hidden">
     <div class="launcher-heading">
      <div>
       <span class= "eyebrow">Your Workspace</span>
@@ -49,19 +68,19 @@ function renderDesktop(){
     </div>
     <div class ="launcher-grid">
     ${applications.map((item)=>`
-      <button class ="launcher-app"data-app= "${item.id}">
-      <span class ="app-icon icon-${item,id}">${item.icon}</span>
+      <button class ="launcher-app" data-app= "${item.id}">
+      <span class ="app-icon icon-${item.id}">${item.icon}</span>
       <span class= "launcher-app-name">${item.name}</span>
-      <span class = "launcher-app-description>${item.description}</span>
+      <span class = "launcher-app-description">${item.description}</span> 
     </button>`).join(``)}
    </div>
    <div class ="launcher-footer">PeasantOS·Preview</div>
    </div>
    <footer class="taskbar">
-   <button class ="taskbar-start" data-action ="launcher-" aria-label= "Open app launcher">
-    <span class ="brand-mark"P</span>
+   <button class ="taskbar-start" data-action ="launcher" aria-label= "Open app launcher">
+    <span class ="brand-mark">P</span>
   </button>
-  <div id= "taskbar-apps" class ="taskbar-apps"></span>
+  <div id= "taskbar-apps" class ="taskbar-apps"></div>
   <div class="taskbar-clock">
    <span id="clock-time">${getTime()}</span>
    </div>
@@ -102,21 +121,21 @@ function getWindowContent(id){
       return`
       <div class ="settings-content">
        <div class= "settings-card">
-       <span class = "settings-symbol>◈</span>
+       <span class = "settings-symbol">◈</span>
        <div><strong>PeasantOS</strong><p>Version 0.1.0 · Development build</p></div>
       </div>
       <h3>System</h3>
-      <div class ="settings row"><span>Environment</span><strong>Browser</strong></div>
-      <div class ="settings row"><span>Network</span><strong>Browser-managed</strong></div>
-      <div class ="settings row"><span>storage</span><strong>Local Demo </strong></div>
+      <div class ="settings-row"><span>Environment</span><strong>Browser</strong></div>
+      <div class ="settings-row"><span>Network</span><strong>Browser-managed</strong></div>
+      <div class ="settings-row"><span>storage</span><strong>Local Demo </strong></div>
       <p class ="muted-note">These settings are informational in this MVP</p>
       </div>`;
     case 'about':
       return`
-      <div class ="about-content"
-      <div class="about logo">P</div>
+      <div class ="about-content">
+      <div class="about-logo">P</div>
       <h2>PeasantOS</h2>
-      <p class class="about-subtitle">A small OS-inspired experience built for the web.</p>
+      <p  class="about-subtitle">A small OS-inspired experience built for the web.</p>
           <div class="about-divider"></div>
           <p>This is a browser-based desktop simulation, not a bootable operating system.</p>
           <p>Built with vanilla JavaScript, CSS, and Vite.</p>
@@ -127,7 +146,7 @@ function getWindowContent(id){
       return '<p class="muted-note">Application not found.</p>';
   } 
 }
-function openAPP(id){
+function openApp(id){
   const existing  =state.windows.find((window)=>window.appId===id);
   if(existing){
     existing.minimized=false;
@@ -139,18 +158,18 @@ function openAPP(id){
   }
   const appInfo= applications.find((item)=>item.id===id);
   if(!appInfo) return;
-  const WindowState={
+  const windowState={
     id: state.nextid++,
-    appid:id,
+    appId:id,
     title:appInfo.name,
     x:Math.min(190+state.windows.length*32,window.innerWidth -480),
-    y:Math.min(190+state.windows.length*28, windows.innerHeight -400),
+    y:Math.min(190+state.windows.length*28, window.innerHeight -400),
     width:id==='terminal' ? 650:560,
     height:id==='terminal'?390:360,
     minimized:false,
     zIndex:state.nextid++,
   };
-  state.windows.push(WindowState);
+  state.windows.push(windowState);
   focusWindow(windowState.id);
   state.launcherOpen=false;
   renderWindows();
@@ -161,15 +180,21 @@ function focusWindow(id){
   state.activeId=id;
   const target=state.windows.find((window)=> window.id===id);
   if(target) target.zIndex=Math.max(20,...state.windows.map((window)=> window.zIndex))+1;
-  renderWindows();
+  document.querySelectorAll('.app-window').forEach((el) => {
+    const w =state.windows.find((item) =>  item.id === Number(el.dataset.windowId));
+    el.classList.toggle('active-window',w?.id === id);
+
+    if (w) el.style.zIndex = w.zIndex;
+  });
+  renderTaskbar();
 
 }
 function renderWindows(){
   const layer=document.querySelector('#window-layer');
-  const taskbar =document.querySelector('#taskbarapps');
+  const taskbar =document.querySelector('#taskbar-apps');
   if(!layer ||!taskbar)return;
   layer.innerHTML=state.windows
-  .filter((windows)=>!window.minimized)
+  .filter((w)=>!w.minimized)
   .map((window)=>`
      <section
       class ="app-window ${window.id === state.activeId ?'active-window' : ''}"
@@ -190,6 +215,7 @@ function renderWindows(){
       </section>`).join(``);
       bindWindowInteractions();
       bindTerminal();
+      renderTaskbar();
        
 }
 
@@ -251,14 +277,14 @@ function bindTerminal(){
    if (!form || !input || !output) return;
    form.addEventListener('submit',(event) =>{
     event.preventDefault();
-    const command= input.ariaValueMax.trim();
+    const command= input.value.trim();
     if(!command) return;
     const line =document.createElement('div');
     line.className='terminal-line';
     line.innerHTML =`<span class="terminal-prompt">guest@peasantos:~$</span> ${escapeHTML(command)}`;
     output.append(line);
     const [program, ...args]=command.split(/\s+/);
-    const result=document.createElement('div ')
+    const result=document.createElement('div')
     result.className ='terminal-result';
     switch (program.toLowerCase()) {
       case 'help' :
@@ -288,7 +314,7 @@ function bindTerminal(){
         return;
       default:
         result.textContent=`Command not found:${program}. Type "help" for available commands`;
-        result.classList.add('terminal-error ');
+        result.classList.add('terminal-error');
     }
     output.append(result);
     input.value ='';
